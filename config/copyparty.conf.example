@@ -18,8 +18,8 @@
 
 [accounts]
   # Add accounts using hashes generated with --ah-cli (see README).
-  # admin: +YOUR_GENERATED_HASH
-  # editor: +ANOTHER_GENERATED_HASH
+  admin: +20_BiqZfOgBDCs9CQeOKlYvaLPf0NNbz
+  editor: +Qrh1NOXCnWze8N9wxudEqGQljp7ASNCG
 
 [/]
   /w
