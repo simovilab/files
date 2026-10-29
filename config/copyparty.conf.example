@@ -1,0 +1,30 @@
+[global]
+  p: 3923
+  http-only
+  usernames
+  ah-alg: argon2
+  e2dsa
+  hist: /state/hists
+  # Rescan files added directly on the server every five minutes.
+  re-maxage: 300
+  # Traefik is the only proxy hop; use its rightmost X-Forwarded-For entry.
+  rproxy: -1
+  xff-hdr: x-forwarded-for
+  # Replace with Traefik's IP (/32), or the trusted proxy network's CIDR.
+  # Loopback-only is a safe default: forwarded client IPs are not yet trusted.
+  xff-src: 127.0.0.1/32
+  # Disable anonymous upload-undo, even if uploads are enabled later.
+  unpost: 0
+
+[accounts]
+  # Add accounts using hashes generated with --ah-cli (see README).
+  # admin: +YOUR_GENERATED_HASH
+  # editor: +ANOTHER_GENERATED_HASH
+
+[/]
+  /w
+  accs:
+    r: *
+    # Uncomment after creating the corresponding accounts above.
+    # rwmda: admin
+    # rwmd: editor

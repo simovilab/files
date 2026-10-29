@@ -1,0 +1,78 @@
+name: simovi-files
+
+services:
+  copyparty:
+    image: ${COPYPARTY_IMAGE:-copyparty/ac:latest}
+    restart: unless-stopped
+    user: "${COPYPARTY_UID:-1000}:${COPYPARTY_GID:-1000}"
+    # Load only our explicit config, not the image's public-write defaults.
+    entrypoint: ["python3", "-m", "copyparty"]
+    command: ["-c", "/cfg/copyparty.conf"]
+    environment:
+      XDG_CONFIG_HOME: /state
+      PYTHONUNBUFFERED: "1"
+      TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ./config/copyparty.conf
+        target: /cfg/copyparty.conf
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./state
+        target: /state
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${COPYPARTY_DATA_DIR:-./data}
+        target: /w
+        bind:
+          create_host_path: false
+    networks:
+      - traefik
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m,mode=1777
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3923/?reset=/._', timeout=5).close()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_DOCKER_NETWORK:-traefik_proxy}
+      traefik.http.services.simovi-files.loadbalancer.server.port: "3923"
+      traefik.http.routers.simovi-files.rule: Host(`${FILE_SERVER_DOMAIN:-files.simovi.org}`)
+      traefik.http.routers.simovi-files.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:-websecure}
+      traefik.http.routers.simovi-files.service: simovi-files
+      traefik.http.routers.simovi-files.tls: "true"
+      traefik.http.routers.simovi-files.tls.certresolver: ${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      traefik.http.routers.simovi-files-http.rule: Host(`${FILE_SERVER_DOMAIN:-files.simovi.org}`)
+      traefik.http.routers.simovi-files-http.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT:-web}
+      traefik.http.routers.simovi-files-http.service: simovi-files
+      traefik.http.routers.simovi-files-http.middlewares: simovi-files-https
+      traefik.http.middlewares.simovi-files-https.redirectscheme.scheme: https
+      traefik.http.middlewares.simovi-files-https.redirectscheme.permanent: "true"
+
+networks:
+  traefik:
+    external: true
+    name: traefik_proxy

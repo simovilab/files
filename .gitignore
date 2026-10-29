@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+config/*
+!config/copyparty.conf.example
+data/
+state/
+.hist/
+.DS_Store
